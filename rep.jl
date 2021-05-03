@@ -10,6 +10,7 @@ using Longurl
 using CSV
 using Dates
 using URIs
+using Plots
 
 reliability = CSV.File("reliability.csv") |> DataFrame
 
@@ -25,10 +26,12 @@ short_urls = [
 ]
 
 date_format = DateFormat("e u d H:M:S +0000 Y")
-start_date = "2021-04-01"
+start_date_format = DateFormat("Y-m-d")
+start_date = "2021-01-01"
 end_date = "now"
-collect_new_data = false
-use_stored_data = true
+collect_new_data = true
+use_stored_data = false
+start_date_date = Date(start_date, start_date_format)
 
 if collect_new_data
     using PyCall
@@ -101,7 +104,26 @@ if !use_stored_data
 
     CSV.write("url_df.csv", url_df)
 else
+    println("Reading in saved data")
     url_df = CSV.File("url_df.csv") |> DataFrame
 end
 
-show(url_df)
+#show(url_df)
+
+function weeks(date) 
+    return (date - start_date_date) ÷ 2
+end
+
+function months(date) 
+    return (date - start_date_date) ÷ Dates.DaDates.Month(1)
+end
+
+plot_1 = url_df |>
+            x -> filter(row -> row.unreliable == true, x) |>
+            x -> transform(x, :date => ByRow(x ->
+                    weeks(x)) => :weeks) |>
+            x -> groupby(x, :weeks) |>
+            x -> combine(x, nrow => :n) |>
+            x -> plot(x.weeks, x.n)
+
+savefig(plot_1, "plot.png")
