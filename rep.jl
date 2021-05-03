@@ -111,11 +111,11 @@ end
 #show(url_df)
 
 function weeks(date) 
-    return (date - start_date_date) ÷ 2
+    return (date - start_date_date) ÷ 7
 end
 
 function months(date) 
-    return (date - start_date_date) ÷ Dates.DaDates.Month(1)
+    return (date - start_date_date) ÷ 30
 end
 
 plot_1 = url_df |>
