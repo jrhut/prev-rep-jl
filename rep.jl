@@ -38,7 +38,7 @@ if collect_new_data
     using esextract
 
     all_data = get_query_dataframe( 
-        return_fields=["entities.urls.expanded_url","user.id_str"],
+        return_fields=["id_str", "retweet_count", "reply_count", "favorite_count", "entities.urls.expanded_url"],
         fields_to_search=["tags"],
         search_string="covid",
         start_date=start_date,
@@ -55,9 +55,9 @@ if !use_stored_data
     println("Cleaning data")
 
     clean_data = all_data |>
-                    x -> rename(x, [:url,:userid,:id,:date]) |>
-                    x -> select(x, Not(:id)) |>
-                    x -> transform(x, :date => ByRow(x -> Date(x, date_format)) => :date)
+                    x -> rename(x, [:TweetID,:NRetweet, :NReplies, :NLikes, :url, :ID, :Date]) |>
+                    x -> select(x, Not(:ID)) |>
+                    x -> transform(x, :Date => ByRow(x -> Date(x, date_format)) => :Date)
 
     println("Processing urls")
 
@@ -97,7 +97,7 @@ if !use_stored_data
                     x -> transform(x, :expanded_url => :orig_url,
                         :orig_url => ByRow(x ->
                             URI(x).host) => :clean_url) |>
-                    x -> select(x, :date, :url, :orig_url, :clean_url, :userid) |>
+                    x -> select(x, :TweetID, :NRetweet, :NReplies, :NLikes, :ID, :Date, :url, :orig_url, :clean_url) |>
                     x -> innerjoin(x, reliability, on = :clean_url => :url)
 
     url_df = [tweets_joined;tweets_joined_short]
@@ -120,7 +120,7 @@ end
 
 plot_1 = url_df |>
             x -> filter(row -> row.unreliable == true, x) |>
-            x -> transform(x, :date => ByRow(x ->
+            x -> transform(x, :Date => ByRow(x ->
                     weeks(x)) => :weeks) |>
             x -> groupby(x, :weeks) |>
             x -> combine(x, nrow => :n) |>
