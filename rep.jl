@@ -29,7 +29,7 @@ date_format = DateFormat("e u d H:M:S +0000 Y")
 start_date_format = DateFormat("Y-m-d")
 start_date = "2021-01-01"
 end_date = "now"
-collect_new_data = true
+collect_new_data = false
 use_stored_data = false
 start_date_date = Date(start_date, start_date_format)
 
@@ -55,7 +55,7 @@ if !use_stored_data
     println("Cleaning data")
 
     clean_data = all_data |>
-                    x -> rename(x, [:TweetID,:NRetweet, :NReplies, :NLikes, :url, :ID, :Date]) |>
+                    x -> rename(x, [:TweetID, :NRetweet, :NReplies, :NLikes, :url, :ID, :Date]) |>
                     x -> select(x, Not(:ID)) |>
                     x -> transform(x, :Date => ByRow(x -> Date(x, date_format)) => :Date)
 
@@ -97,7 +97,7 @@ if !use_stored_data
                     x -> transform(x, :expanded_url => :orig_url,
                         :orig_url => ByRow(x ->
                             URI(x).host) => :clean_url) |>
-                    x -> select(x, :TweetID, :NRetweet, :NReplies, :NLikes, :ID, :Date, :url, :orig_url, :clean_url) |>
+                    x -> select(x, :TweetID, :NRetweet, :NReplies, :NLikes, :Date, :url, :orig_url, :clean_url) |>
                     x -> innerjoin(x, reliability, on = :clean_url => :url)
 
     url_df = [tweets_joined;tweets_joined_short]
